@@ -210,9 +210,11 @@ def evolution_commit_and_push(commit_message: str, tool_context: ToolContext) ->
 
     # Collect sandbox files to copy
     staged_files = []
-    for root, _dirs, files in os.walk(sandbox_dir):
-        if "__pycache__" in root:
-            continue
+    ignore_dirs = {".venv", ".pytest_cache", "__pycache__", ".git"}
+    for root, dirs, files in os.walk(sandbox_dir):
+        # Filter out ignored directories in-place to prevent os.walk from entering them
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+        
         for fname in files:
             src = os.path.join(root, fname)
             rel = os.path.relpath(src, sandbox_dir)
