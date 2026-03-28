@@ -228,9 +228,12 @@ def evolution_commit_and_push(commit_message: str, tool_context: ToolContext) ->
 
     # Collect sandbox files to copy
     staged_files = []
-    for root, _dirs, files in os.walk(sandbox_dir):
-        if "__pycache__" in root:
-            continue
+    _ignored_patterns = {".pytest_cache", "__pycache__", ".venv", ".git"}
+    
+    for root, dirs, files in os.walk(sandbox_dir):
+        # Prune ignored directories to avoid walking into them
+        dirs[:] = [d for d in dirs if d not in _ignored_patterns]
+        
         for fname in files:
             src = os.path.join(root, fname)
             # Skip symlinks — these are bootstrap artifacts (uv.lock,
@@ -293,9 +296,8 @@ def evolution_commit_and_push(commit_message: str, tool_context: ToolContext) ->
     finally:
         if os.path.exists(tmp_repo_dir):
             shutil.rmtree(tmp_repo_dir)
-
-    # Clean up sandbox
-    shutil.rmtree(sandbox_dir, ignore_errors=True)
+        # ALWAYS clean up sandbox after a commit attempt to prevent state pollution
+        shutil.rmtree(sandbox_dir, ignore_errors=True)
 
     return {
         "status": "success",
