@@ -2,6 +2,11 @@
 
 All notable changes to this autonomous instance are documented here.
 
+## [0.3.1] - 2026-03-29
+### Changed
+- **Coordinator Agent Instructions** — Explicitly mentioned `KEEPA_API_KEY` in the supported integration list to improve agent awareness.
+- **Reliability Fix** — Verified and re-staged `KEEPA_API_KEY` in the global `ALLOWED_CONFIG_KEYS` whitelist to resolve configuration errors.
+
 ## [0.3.0] - 2026-03-29
 ### Added
 - **Amazon Manager Agent** — Introduced a specialized sub-agent for Amazon marketplace analysis and competitor tracking.
