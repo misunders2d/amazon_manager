@@ -2,15 +2,10 @@
 
 All notable changes to this autonomous instance are documented here.
 
-## [0.3.2] - 2026-03-29
+## [0.4.0] - 2026-03-29
 ### Added
-- **Module Reloading** — Added `importlib.reload` to `configure_integration` to force the bot to pick up whitelist changes without a full process restart.
-- **Diagnostic Logging** — Added detailed debug prints to `app/app_utils/config.py` and `app/tools/integrations.py` to trace module loading issues.
-
-## [0.3.1] - 2026-03-29
-### Changed
-- **Coordinator Agent Instructions** — Explicitly mentioned `KEEPA_API_KEY` in the supported integration list to improve agent awareness.
-- **Reliability Fix** — Verified and re-staged `KEEPA_API_KEY` in the global `ALLOWED_CONFIG_KEYS` whitelist to resolve configuration errors.
+- **Official Keepa Integration** — Enabled `KEEPA_API_KEY` in the secure configuration whitelist.
+- **Improved Host Deployment** — Cleaned up diagnostic bloat and streamlined the evolutionary path.
 
 ## [0.3.0] - 2026-03-29
 ### Added

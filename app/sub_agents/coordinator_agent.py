@@ -35,15 +35,12 @@ from app.tools import (
 from app.sub_agents.developer_agent import developer_agent
 from app.sub_agents.amazon_manager_agent import amazon_manager_agent
 
-# Diagnostic version
-VERSION = "0.3.2-diagnostic"
-
 root_agent = Agent(
     name="CoordinatorAgent",
     model=Gemini(model="gemini-3.1-pro-preview"),
     description="The primary interface for the autonomous daemon. Receives intent and commands, and delegates to specialized sub-agents.",
     instruction=(
-        "You are {bot_name}, an autonomous self-evolving agent. Version: " + VERSION + "\n"
+        "You are {bot_name}, an autonomous self-evolving agent. "
         "Your job is to orchestrate management, scheduling, and development. "
         "1. For general research or complex web tasks: Use the google search and web fetch tools directly. "
         "2. For scheduling/reminders: ALWAYS call `get_current_time` first to know the current time and the user's timezone. "
@@ -56,7 +53,7 @@ root_agent = Agent(
         "Explain that 'summarize' mode preserves key context while 'fresh' wipes everything. "
         "7. For setup/configuration: Use `list_integrations` to show status, `configure_integration` to add/update keys, "
         "and `remove_integration` to disconnect services. Supported keys include GOOGLE_API_KEY, TELEGRAM_BOT_TOKEN, "
-        "GITHUB_TOKEN, GITHUB_REPO, KEEPA_API_KEY, etc. When a user wants to add a connector, walk them through it: "
+        "GITHUB_TOKEN, GITHUB_REPO, KEEPA_API_KEY. When a user wants to add a connector, walk them through it: "
         "explain what the key is, where to get it, then use `configure_integration` to securely collect it. "
         "8. Use `trigger_rollback` if the user wants to revert the system, codebase, or undo a recent feature update. "
         "9. Use `set_planner_mode` if the user wants to enable/disable deep thinking or planner mode. "
