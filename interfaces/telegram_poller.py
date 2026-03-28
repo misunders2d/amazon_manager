@@ -2,6 +2,7 @@ import asyncio
 import logging
 import mimetypes
 import os
+import re
 from typing import Optional
 
 import httpx
@@ -15,6 +16,34 @@ from app.core.agent_executor import (
 from app.core.transport import TransportAdapter, register_adapter
 
 logger = logging.getLogger(__name__)
+
+# Keys whose env values are sensitive secrets (not public identifiers like GITHUB_REPO)
+_SECRET_ENV_KEYS = {"GOOGLE_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_WEBHOOK_SECRET", "GITHUB_TOKEN"}
+
+# Common token patterns as a fallback (catches secrets the env doesn't know about yet)
+_TOKEN_PATTERNS = re.compile(
+    r"(?:github_pat_[A-Za-z0-9_]{20,})"
+    r"|(?:ghp_[A-Za-z0-9]{36,})"
+    r"|(?:gho_[A-Za-z0-9]{36,})"
+    r"|(?:ghu_[A-Za-z0-9]{36,})"
+    r"|(?:ghs_[A-Za-z0-9]{36,})"
+    r"|(?:sk-[A-Za-z0-9]{20,})"
+    r"|(?:AIzaSy[A-Za-z0-9_-]{33})"
+)
+
+
+def _scrub_secrets(text: str) -> str:
+    """Redact known secret values and common token patterns from outgoing text."""
+    # Layer 1: Redact actual configured secret values from env
+    for key in _SECRET_ENV_KEYS:
+        val = os.environ.get(key, "")
+        if val and len(val) > 8 and val in text:
+            text = text.replace(val, f"[REDACTED]")
+
+    # Layer 2: Regex fallback for common token formats
+    text = _TOKEN_PATTERNS.sub("[REDACTED]", text)
+
+    return text
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/{method}"
 TELEGRAM_FILE_API = "https://api.telegram.org/file/bot{token}/{path}"
@@ -47,6 +76,9 @@ class TelegramAdapter(TransportAdapter):
 
     async def send_message(self, chat_id: str | int, text: str) -> None:
         url = TELEGRAM_API.format(token=self._token, method="sendMessage")
+
+        # SECURITY: Scrub any leaked secrets before they reach the user
+        text = _scrub_secrets(text)
         
         # Safe chunking to handle the 4096 character limit
         limit = 4000
@@ -336,25 +368,68 @@ async def poll_telegram(get_runner_fn, process_init_fn):
                             await adapter.send_message(chat_id, result["message"])
                         continue
 
-                    # Handle /init command
+                    # Handle /init command — delete the message since it may contain inline credentials
                     if text.strip().startswith("/init"):
+                        await adapter.delete_message(chat_id, message_id)
                         result = process_init_fn(text)
                         await adapter.send_message(chat_id, result)
                         continue
 
                     # Handle /start command
+                    bot_name = os.environ.get("BOT_NAME", "Ori")
                     if text.strip() == "/start":
-                        await adapter.send_message(
-                            chat_id,
-                            "Welcome to the Ori Daemon! Send me a message to get started.",
-                        )
+                        runner_check = get_runner_fn()
+                        if runner_check:
+                            await adapter.send_message(
+                                chat_id,
+                                f"{bot_name} is online and ready. Send me a message to get started.",
+                            )
+                        else:
+                            await adapter.send_message(
+                                chat_id,
+                                f"Welcome to {bot_name}!\n\n"
+                                "The bot needs a Google API key before it can respond.\n\n"
+                                "Send the following command to configure it:\n"
+                                "`/init YOUR_PASSCODE GOOGLE_API_KEY=your-key-here`\n\n"
+                                "You can also give me a custom name:\n"
+                                "`/init YOUR_PASSCODE BOT_NAME=MyBot`\n\n"
+                                "Your admin passcode was printed to the server console on first start. "
+                                "You can also find it in the `.env` file on the server.",
+                            )
+                        continue
+
+                    # Handle /reset command — bypass the agent entirely
+                    if text.strip() == "/reset":
+                        runner_check = get_runner_fn()
+                        if runner_check:
+                            from app.core.agent_executor import _perform_session_refresh
+
+                            # Cancel any in-flight task for this session
+                            if session_id in _active_tasks and not _active_tasks[session_id].done():
+                                _active_tasks[session_id].cancel()
+
+                            refresh_msg = await _perform_session_refresh(
+                                runner_check, session_user_id, session_id, "fresh"
+                            )
+                            await adapter.send_message(
+                                chat_id,
+                                f"Session reset. {bot_name} is ready for a fresh conversation.",
+                            )
+                        else:
+                            await adapter.send_message(
+                                chat_id,
+                                f"{bot_name} is not configured yet — nothing to reset.",
+                            )
                         continue
 
                     runner = get_runner_fn()
                     if not runner:
                         await adapter.send_message(
                             chat_id,
-                            "Bot is not fully configured yet. Please visit the /setup page.",
+                            f"{bot_name} is not configured yet.\n\n"
+                            "To set up, send:\n"
+                            "`/init YOUR_PASSCODE GOOGLE_API_KEY=your-key-here`\n\n"
+                            "Check the server console or `.env` file for your admin passcode.",
                         )
                         continue
 

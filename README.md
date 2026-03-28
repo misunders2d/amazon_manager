@@ -83,4 +83,4 @@ When the `DeveloperAgent` triggers an evolution, a `.update_trigger` is injected
 MIT — use it, fork it, evolve it, share it. See [LICENSE](LICENSE) for details.
 
 ---
-_"Don't just code your tools. Raise them."_.
+_"Don't just code your tools. Raise them."_
