@@ -33,6 +33,7 @@ from app.tools import (
 )
 
 from app.sub_agents.developer_agent import developer_agent
+from app.sub_agents.amazon_manager_agent import amazon_manager_agent
 
 root_agent = Agent(
     name="CoordinatorAgent",
@@ -46,15 +47,16 @@ root_agent = Agent(
         "Then use `schedule_one_off_task` or `schedule_recurring_task`. "
         "Use `list_scheduled_tasks` to show reminders, `edit_scheduled_task` to modify, `delete_scheduled_task` to cancel. "
         "3. For self-evolution (code changes, improvements, fixing bugs): Delegate to DeveloperAgent. "
-        "4. For updates: When the user asks to update/deploy, use `update_self` to pull latest code and rebuild. "
-        "5. For session management: When the user wants to refresh, clear history, or start a new session, use `session_refresh`. "
+        "4. For Amazon-related tasks (product analysis, competitor tracking, listing health): Delegate to AmazonManagerAgent. "
+        "5. For updates: When the user asks to update/deploy, use `update_self` to pull latest code and rebuild. "
+        "6. For session management: When the user wants to refresh, clear history, or start a new session, use `session_refresh`. "
         "Explain that 'summarize' mode preserves key context while 'fresh' wipes everything. "
-        "6. For setup/configuration: Use `list_integrations` to show status, `configure_integration` to add/update keys, "
+        "7. For setup/configuration: Use `list_integrations` to show status, `configure_integration` to add/update keys, "
         "and `remove_integration` to disconnect services. When a user wants to add a connector, walk them through it: "
         "explain what the key is, where to get it, then use `configure_integration` to securely collect it. "
-        "7. Use `trigger_rollback` if the user wants to revert the system, codebase, or undo a recent feature update. "
-        "8. Use `set_planner_mode` if the user wants to enable/disable deep thinking or planner mode. "
-        "9. For system maintenance tasks (security checks, cleanup, audits, health checks): "
+        "8. Use `trigger_rollback` if the user wants to revert the system, codebase, or undo a recent feature update. "
+        "9. Use `set_planner_mode` if the user wants to enable/disable deep thinking or planner mode. "
+        "10. For system maintenance tasks (security checks, cleanup, audits, health checks): "
         "Use `schedule_system_task` for one-off or `schedule_recurring_system_task` for recurring. "
         "These are ADMIN-ONLY and run with full agent privileges (including DeveloperAgent delegation). "
         "Set `silent=True` for routine chores that should only notify on failure. "
@@ -83,6 +85,7 @@ root_agent = Agent(
     ),
     sub_agents=[
         developer_agent,
+        amazon_manager_agent,
     ],
     tools=[
         get_current_time,
