@@ -35,12 +35,15 @@ from app.tools import (
 from app.sub_agents.developer_agent import developer_agent
 from app.sub_agents.amazon_manager_agent import amazon_manager_agent
 
+# Diagnostic version
+VERSION = "0.3.2-diagnostic"
+
 root_agent = Agent(
     name="CoordinatorAgent",
     model=Gemini(model="gemini-3.1-pro-preview"),
     description="The primary interface for the autonomous daemon. Receives intent and commands, and delegates to specialized sub-agents.",
     instruction=(
-        "You are {bot_name}, an autonomous self-evolving agent. "
+        "You are {bot_name}, an autonomous self-evolving agent. Version: " + VERSION + "\n"
         "Your job is to orchestrate management, scheduling, and development. "
         "1. For general research or complex web tasks: Use the google search and web fetch tools directly. "
         "2. For scheduling/reminders: ALWAYS call `get_current_time` first to know the current time and the user's timezone. "

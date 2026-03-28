@@ -4,13 +4,12 @@ import subprocess
 import sys
 import uuid
 from datetime import datetime
+import importlib
 
 from google.adk.auth.auth_credential import AuthCredential, OAuth2Auth
 from google.adk.auth.auth_schemes import OAuth2, OAuthGrantType
 from google.adk.auth.auth_tool import AuthConfig
 from google.adk.tools.tool_context import ToolContext
-
-
 
 
 def configure_integration(key_name: str, tool_context: ToolContext) -> dict:
@@ -32,14 +31,21 @@ def configure_integration(key_name: str, tool_context: ToolContext) -> dict:
     Returns:
         dict: Status and instructions to relay to the user.
     """
+    import app.app_utils.config
+    print(f"DEBUG: CWD = {os.getcwd()}")
+    print(f"DEBUG: sys.path = {sys.path}")
+    print(f"DEBUG: BEFORE RELOAD - ALLOWED_CONFIG_KEYS = {app.app_utils.config.ALLOWED_CONFIG_KEYS}")
+    
+    importlib.reload(app.app_utils.config)
     from app.app_utils.config import ALLOWED_CONFIG_KEYS
+    print(f"DEBUG: AFTER RELOAD - ALLOWED_CONFIG_KEYS = {ALLOWED_CONFIG_KEYS}")
 
     key_name = key_name.strip().upper()
 
     if key_name not in ALLOWED_CONFIG_KEYS:
         return {
             "status": "error",
-            "message": f"Unknown key: {key_name}. Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}",
+            "message": f"Unknown key: {key_name}. Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}. Diagnostic: Process might be running from old Docker image or different volume mount.",
         }
 
     # Register pending capture using the session_id — works for any channel
@@ -115,6 +121,3 @@ def list_integrations(tool_context: ToolContext) -> dict:
         integrations[key] = "connected" if os.environ.get(key) else "not configured"
 
     return {"status": "success", "integrations": integrations}
-
-
-

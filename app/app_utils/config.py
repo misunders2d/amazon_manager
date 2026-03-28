@@ -1,8 +1,12 @@
 import hmac
 import os
 import shlex
+import sys
 
 from dotenv import set_key
+
+print(f"DEBUG: Loading app.app_utils.config from {__file__}")
+print(f"DEBUG: sys.path = {sys.path}")
 
 ENV_FILE_PATH = os.environ.get("DOTENV_PATH", "./data/.env")
 
