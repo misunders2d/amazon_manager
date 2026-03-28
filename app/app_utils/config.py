@@ -4,6 +4,9 @@ import shlex
 
 from dotenv import set_key
 
+# Version 0.4.1 - CLEAN UPDATE
+print("--- LOADING CONFIG V0.4.1 ---")
+
 ENV_FILE_PATH = os.environ.get("DOTENV_PATH", "./data/.env")
 
 ALLOWED_CONFIG_KEYS = frozenset({

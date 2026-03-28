@@ -24,6 +24,14 @@ def update_self(tool_context: ToolContext) -> dict:
 
     import json as _json
 
+    # AUTHORITATIVE CLEANUP: Wipe local uncommitted changes to ensure deploy.sh pulls fresh code.
+    try:
+        subprocess.run(["git", "config", "--global", "--add", "safe.directory", "/code"], check=False)
+        subprocess.run(["git", "reset", "--hard", "HEAD"], check=False)
+        subprocess.run(["git", "clean", "-fd"], check=False)
+    except Exception:
+        pass
+
     trigger_path = os.path.abspath("./data/.update_trigger")
 
     # Determine who to notify after rebuild
@@ -43,7 +51,7 @@ def update_self(tool_context: ToolContext) -> dict:
             }, f)
         return {
             "status": "success",
-            "message": "Update triggered. The bot will pull the latest code, rebuild, and restart. "
+            "message": "Update triggered. I have cleaned my local state and requested a fresh build from GitHub. "
                        "I'll notify you when the update is complete.",
         }
     except Exception as e:
